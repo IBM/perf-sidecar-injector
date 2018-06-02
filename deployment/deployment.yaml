@@ -1,19 +1,19 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: sidecar-injector-webhook-deployment
+  name: perf-sidecar-injector-webhook-deployment
   labels:
-    app: sidecar-injector
+    app: perf-sidecar-injector
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: sidecar-injector
+        app: perf-sidecar-injector
     spec:
       containers:
-        - name: sidecar-injector
-          image: morvencao/sidecar-injector:v1
+        - name: perf-sidecar-injector
+          image: bpradipt/perf-sidecar-injector:v1
           imagePullPolicy: IfNotPresent
           args:
             - -sidecarCfgFile=/etc/webhook/config/sidecarconfig.yaml
@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: webhook-certs
           secret:
-            secretName: sidecar-injector-webhook-certs
+            secretName: perf-sidecar-injector-webhook-certs
         - name: webhook-config
           configMap:
-            name: sidecar-injector-webhook-configmap
+            name: perf-sidecar-injector-webhook-configmap

@@ -1,14 +1,14 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: sidecar-injector-webhook-cfg
+  name: perf-sidecar-injector-webhook-cfg
   labels:
-    app: sidecar-injector
+    app: perf-sidecar-injector
 webhooks:
-  - name: sidecar-injector.morven.me
+  - name: sidecar-injector.perf.local
     clientConfig:
       service:
-        name: sidecar-injector-webhook-svc
+        name: perf-sidecar-injector-webhook-svc
         namespace: default
         path: "/mutate"
       caBundle: ${CA_BUNDLE}

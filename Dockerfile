@@ -1,4 +1,4 @@
 FROM alpine:latest
 
-ADD kube-mutating-webhook-tutorial /kube-mutating-webhook-tutorial
-ENTRYPOINT ["./kube-mutating-webhook-tutorial"]
+ADD perf-sidecar-injector /perf-sidecar-injector
+ENTRYPOINT ["./perf-sidecar-injector"]

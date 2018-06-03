@@ -1,19 +1,25 @@
-# Kubernetes Mutating Admission Webhook for sidecar injection
+# Introduction
+This is a sidecar injector to allow injecting 'perf' container with PID sharing.<br>
+The purpose of this injector is to inject 'perf' container in deployed PODs to capture perf statistics for
+performance analysis
 
-This tutoral shows how to build and deploy a [MutatingAdmissionWebhook](https://kubernetes.io/docs/admin/admission-controllers/#mutatingadmissionwebhook-beta-in-19) that injects a nginx sidecar container into pod prior to persistence of the object.
+Acknowledgement: The code is based on Morven Cao's sample MutatingAdmissionWebhook as described in the following [medium article](https://medium.com/ibm-cloud/diving-into-kubernetes-mutatingadmissionwebhook-6ef3c5695f74). The code can be found [here](https://github.com/morvencao/kube-mutating-webhook-tutorial)
 
-## Prerequisites
+The first iteration of this work was by extending the [istio sidecar injector](https://github.com/bpradipt/istio)
 
-Kubernetes 1.9.0 or above with the `admissionregistration.k8s.io/v1beta1` API enabled. Verify that by the following command:
+# Note
+'perf' container requires PID namespace sharing and privilege access.
+
+
+## Deploy
+- Ensure you are using Kubernetes 1.10+ and the following settings enabled:
+  - `PodShareProcessNamespace=true` feature-gate turned on
+  - Ensure kube-apiserver has the `admission-control` flag set with `MutatingAdmissionWebhook` and `ValidatingAdmissionWebhook` admission controllers added
 ```
-kubectl api-versions | grep admissionregistration.k8s.io/v1beta1
-```
-The result should be:
-```
+$kubectl api-versions | grep admissionregistration
+
 admissionregistration.k8s.io/v1beta1
 ```
-
-In addition, the `MutatingAdmissionWebhook` and `ValidatingAdmissionWebhook` admission controllers should be added and listed in the correct order in the admission-control flag of kube-apiserver.
 
 ## Build
 
@@ -33,14 +39,15 @@ go get -u github.com/golang/dep/cmd/dep
 ## Deploy
 
 1. Create a signed cert/key pair and store it in a Kubernetes `secret` that will be consumed by sidecar deployment
+
 ```
-./install/kubernetes/webhook-create-signed-cert.sh \
-    --service sidecar-injector-webhook-svc \
-    --secret sidecar-injector-webhook-certs \
+./deployment/webhook-create-signed-cert.sh \
+    --service perf-sidecar-injector-webhook-svc \
+    --secret perf-sidecar-injector-webhook-certs \
     --namespace default
 ```
 
-2. Patch the `MutatingWebhookConfiguration` by set `caBundle` with correct value from Kubernetes cluster
+2. Patch the `MutatingWebhookConfiguration` by setting `caBundle` with correct value from Kubernetes cluster
 ```
 cat deployment/mutatingwebhook.yaml | \
     deployment/webhook-patch-ca-bundle.sh > \
@@ -49,7 +56,6 @@ cat deployment/mutatingwebhook.yaml | \
 
 3. Deploy resources
 ```
-kubectl create -f deployment/nginxconfigmap.yaml
 kubectl create -f deployment/configmap.yaml
 kubectl create -f deployment/deployment.yaml
 kubectl create -f deployment/service.yaml
@@ -60,18 +66,19 @@ kubectl create -f deployment/mutatingwebhook-ca-bundle.yaml
 
 1. The sidecar inject webhook should be running
 ```
-[root@mstnode ~]# kubectl get pods
+$ kubectl get pods
 NAME                                                  READY     STATUS    RESTARTS   AGE
 sidecar-injector-webhook-deployment-bbb689d69-882dd   1/1       Running   0          5m
-[root@mstnode ~]# kubectl get deployment
+
+$ kubectl get deployment
 NAME                                  DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 sidecar-injector-webhook-deployment   1         1         1            1           5m
 ```
 
 2. Label the default namespace with `sidecar-injector=enabled`
 ```
-kubectl label namespace default sidecar-injector=enabled
-[root@mstnode ~]# kubectl get namespace -L sidecar-injector
+$ kubectl label namespace default sidecar-injector=enabled
+$ kubectl get namespace -L sidecar-injector
 NAME          STATUS    AGE       SIDECAR-INJECTOR
 default       Active    18h       enabled
 kube-public   Active    18h
@@ -80,7 +87,7 @@ kube-system   Active    18h
 
 3. Deploy an app in Kubernetes cluster, take `sleep` app as an example
 ```
-[root@mstnode ~]# cat <<EOF | kubectl create -f -
+$ cat <<EOF | kubectl create -f -
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -90,7 +97,7 @@ spec:
   template:
     metadata:
       annotations:
-        sidecar-injector-webhook.morven.me/inject: "yes"
+        perf-sidecar-injector-webhook/inject: "yes"
       labels:
         app: sleep
     spec:
@@ -104,7 +111,7 @@ EOF
 
 4. Verify sidecar container injected
 ```
-[root@mstnode ~]# kubectl get pods
+$ kubectl get pods
 NAME                     READY     STATUS        RESTARTS   AGE
 sleep-5c55f85f5c-tn2cs   2/2       Running       0          1m
 ```

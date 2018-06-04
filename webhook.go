@@ -52,6 +52,7 @@ type WhSvrParameters struct {
 }
 
 type Config struct {
+	Policy                string             `yaml:"policy"`
 	Containers            []corev1.Container `yaml:"containers"`
 	Volumes               []corev1.Volume    `yaml:"volumes"`
 	ShareProcessNamespace bool               `yaml:"shareProcessNamespace"`
@@ -97,7 +98,7 @@ func loadConfig(configFile string) (*Config, error) {
 }
 
 // Check whether the target resoured need to be mutated
-func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
+func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta, injectPolicy string) bool {
 	// skip special kubernete system namespaces
 	for _, namespace := range ignoredList {
 		if metadata.Namespace == namespace {
@@ -114,19 +115,35 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	status := annotations[admissionWebhookAnnotationStatusKey]
 
 	// determine whether to perform mutation based on annotation for the target resource
+	var useDefault bool
+	var inject bool
+
+	switch strings.ToLower(annotations[admissionWebhookAnnotationInjectKey]) {
+	case "":
+		useDefault = true
+	case "y", "yes", "true", "on":
+		inject = true
+	}
+
 	var required bool
-	if strings.ToLower(status) == "injected" {
+	switch injectPolicy {
+	default:
 		required = false
-	} else {
-		switch strings.ToLower(annotations[admissionWebhookAnnotationInjectKey]) {
-		default:
+	case "disabled":
+		if useDefault {
 			required = false
-		case "y", "yes", "true", "on":
+		} else {
+			required = inject
+		}
+	case "enabled":
+		if useDefault {
 			required = true
+		} else {
+			required = inject
 		}
 	}
 
-	glog.Infof("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
+	glog.Infof("Mutation policy for %v/%v: status: %q required:%v injectPolicy:%v", metadata.Namespace, metadata.Name, status, required, injectPolicy)
 	return required
 }
 
@@ -234,7 +251,7 @@ func (whsvr *WebhookServer) mutate(ar *v1beta1.AdmissionReview) *v1beta1.Admissi
 		req.Kind, req.Namespace, req.Name, pod.Name, req.UID, req.Operation, req.UserInfo)
 
 	// determine whether to perform mutation
-	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta) {
+	if !mutationRequired(ignoredNamespaces, &pod.ObjectMeta, whsvr.sidecarConfig.Policy) {
 		glog.Infof("Skipping mutation for %s/%s due to policy check", pod.Namespace, pod.Name)
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,

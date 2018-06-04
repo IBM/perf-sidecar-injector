@@ -4,6 +4,7 @@ metadata:
   name: perf-sidecar-injector-webhook-configmap
 data:
   sidecarconfig.yaml: |
+    policy: enabled
     containers:
       - name: perf-sidecar
         image: bpradipt/perf:1.0

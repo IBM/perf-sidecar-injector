@@ -6,7 +6,7 @@ data:
   sidecarconfig.yaml: |
     containers:
       - name: perf-sidecar
-        image: bpradipt/perf:4.4
+        image: bpradipt/perf:1.0
         imagePullPolicy: IfNotPresent
         stdin: true
         tty: true

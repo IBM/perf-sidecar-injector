@@ -29,7 +29,7 @@ release: image ## Pushes the image with latest and version tag to dockerhub, REQ
 	docker push "$(IMAGE_ARCH):$(RELEASE_TAG)"
 	docker push "$(IMAGE_ARCH):latest"
 
-manifest:
+manifest: release ## Create multi-arch manifest
 	docker manifest create $(IMAGE):$(RELEASE_TAG) \
 	$(IMAGE)-amd64:$(RELEASE_TAG) \
 	$(IMAGE)-ppc64le:$(RELEASE_TAG)
@@ -49,6 +49,5 @@ help: ## Shows the help
 	@grep -E '^[ a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
         awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ''
-	@echo $(IMAGE_ARCH)
 
-.PHONY: build image clean push release help
+.PHONY: build image clean push release manifest help

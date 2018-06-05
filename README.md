@@ -10,6 +10,7 @@ The first iteration of this work was by extending the [istio sidecar injector](h
 # Note
 'perf' container requires PID namespace sharing and privilege access.
 
+Source for perf container is available from the following github [link](https://github.com/bpradipt/perf-container)
 
 ## Deploy
 - Ensure you are using Kubernetes 1.10+ and the following settings enabled:

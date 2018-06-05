@@ -1,6 +1,0 @@
-dep ensure
-CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o perf-sidecar-injector .
-docker build --no-cache -t bpradipt/perf-sidecar-injector:v1 .
-rm -rf perf-sidecar-injector
-
-docker push bpradipt/perf-sidecar-injector:v1

@@ -7,10 +7,18 @@ data:
     policy: enabled
     containers:
       - name: perf-sidecar
-        image: bpradipt/perf:1.0
+        image: bpradipt/perf:1.1
         imagePullPolicy: IfNotPresent
         stdin: true
         tty: true
         securityContext:
             privileged: true
+        volumeMounts:
+            - name: perf-output
+              mountPath: /out
+    volumes:
+      - name: perf-output
+        hostPath:
+            path: /out
+            type: DirectoryOrCreate
     ShareProcessNamespace: true

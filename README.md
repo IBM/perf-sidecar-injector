@@ -34,7 +34,8 @@ go get -u github.com/golang/dep/cmd/dep
 2. Build and push docker image
    
 ```
-./build
+make image
+make release
 ```
 
 ## Deploy

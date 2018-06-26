@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: perf-sidecar-injector-webhook-configmap
+data:
+  sidecarconfig.yaml: |
+    policy: enabled
+    containers:
+      - name: perf-sidecar
+        image: bpradipt/perf:1.2
+        imagePullPolicy: IfNotPresent
+        stdin: true
+        tty: true
+        args:
+            - 'record'
+            - '0'
+            - '60'
+            - '1'
+            - '-g'
+        securityContext:
+            privileged: true
+        volumeMounts:
+            - name: perf-output
+              mountPath: /out
+    volumes:
+      - name: perf-output
+        hostPath:
+            path: /out
+            type: DirectoryOrCreate
+    ShareProcessNamespace: true

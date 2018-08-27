@@ -1,3 +1,6 @@
+# perf-sidecar-injector
+Sample sidecar demonstrating automatic collection of container performance data using Linux perf tool in a Kubernetes cluster
+
 # Introduction
 This is a sidecar injector to allow injecting 'perf' container with PID sharing.<br>
 The purpose of this injector is to inject 'perf' container in deployed PODs to capture perf statistics for

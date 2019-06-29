@@ -120,3 +120,10 @@ $ kubectl get pods
 NAME                     READY     STATUS        RESTARTS   AGE
 sleep-5c55f85f5c-tn2cs   2/2       Running       0          1m
 ```
+
+## Perf Considerations
+
+1. Ensure the application binaries have symbol information otherwise `perf report -i <path_to_captured_perf_record>` will not be able to show the symbol names. You can use `file <path_to_binary>` to know if the symbols have been stripped from the binary or not
+
+2. `perf report -i <path_to_captured_perf_record>` will require the application binary to resolve the symbol names. Let's say, you are using perf sidecar to capture data for `envoy` which is in the following path of the envoy container image - `/usr/local/bin/envoy`. 
+You'll need to copy the envoy binary to the system where you are analyzing the `perf` data. In the `envoy` example, copy the binary from the respective container image to `/my_home/perf_data/usr/local/bin/envoy` and then run `perf report -i <path_to_captured_perf_record> --symfs /my_home/perf_data --kallsyms /proc/kallsyms`

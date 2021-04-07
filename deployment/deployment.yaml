@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: perf-sidecar-injector-webhook-deployment
@@ -6,6 +6,9 @@ metadata:
     app: perf-sidecar-injector
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: perf-sidecar-injector
   template:
     metadata:
       labels:
